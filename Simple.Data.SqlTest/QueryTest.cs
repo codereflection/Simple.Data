@@ -485,5 +485,13 @@ namespace Simple.Data.SqlTest
             var actual = db.Users.QueryById(1).Select(db.Users.Name).ForUpdate(true).First();
             Assert.AreEqual("Bob", actual.Name);
         }
+
+        [Test]
+        public void QueryFromTableWithComputedColumn()
+        {
+            var db = DatabaseHelper.Open();
+            var count = db.ComputedColumnTest.GetCount();
+            Assert.AreEqual(2, count);
+        }
     }
 }

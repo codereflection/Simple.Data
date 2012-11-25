@@ -293,5 +293,15 @@ namespace Simple.Data.SqlTest
             Assert.IsNotNull(row);
             Assert.IsInstanceOf<byte[]>(row.Version);
         }
+
+        [Test]
+        public void TestInsertWithComputedColumn()
+        {
+            var db = DatabaseHelper.Open();
+            var row = db.ComputedColumnTest.Insert(Name: "Foo", IsGenerated: 'Y');
+            Assert.IsNotNull(row);
+            Assert.AreEqual(3, row.Id);
+        }
+
     }
 }

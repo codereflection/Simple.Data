@@ -78,6 +78,8 @@ BEGIN
 	DROP TABLE [dbo].[HierarchyIdTest]
 	IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[TimestampTest]') AND type in (N'U'))
 	DROP TABLE [dbo].[TimestampTest]
+	IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ComputedColumnTest]') AND type in (N'U'))
+	DROP TABLE [dbo].[ComputedColumnTest]
 
 	CREATE TABLE [dbo].[Users] (
 		[Id]       INT            IDENTITY (1, 1) NOT NULL,
@@ -229,6 +231,15 @@ BEGIN
 		[Id] ASC
 	))
 
+	CREATE TABLE [dbo].[ComputedColumnTest](
+    [Id] [int] identity primary key,
+    [Name] [varchar](50) NULL,
+    [IsGenerated] [char](1) NOT NULL,
+    [Is_Generated]  AS (CONVERT([bit],case [IsGenerated] when 'Y' then (1) else (0) end,(0))) PERSISTED,
+	)
+	ALTER TABLE [dbo].[ComputedColumnTest] ADD  DEFAULT ('Y') FOR [IsGenerated]
+
+
 	BEGIN TRANSACTION
 	SET IDENTITY_INSERT [dbo].[Customers] ON
 	INSERT INTO [dbo].[Customers] ([CustomerId], [Name], [Address]) VALUES (1, N'Test', N'100 Road')
@@ -269,6 +280,9 @@ BEGIN
 	END
 	
 	INSERT INTO [dbo].[DecimalTest] ([Value]) VALUES (1.234567)
+
+	INSERT INTO [dbo].[ComputedColumnTest] (Name, IsGenerated) VALUES ('Item1','N')
+	INSERT INTO [dbo].[ComputedColumnTest] (Name, IsGenerated) VALUES ('Item2','Y')
 	COMMIT TRANSACTION
 
 	ALTER TABLE [dbo].[Notes] WITH NOCHECK
