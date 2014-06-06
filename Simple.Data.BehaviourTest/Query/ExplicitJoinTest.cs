@@ -18,12 +18,14 @@ namespace Simple.Data.IntegrationTest.Query
                                      new[] { "dbo", "Department", "BASE TABLE" },
                                      new[] { "dbo", "Activity", "BASE TABLE"},
                                      new[] { "dbo", "Activity_Join", "BASE TABLE" },
-                                     new[] { "dbo", "Location", "BASE_TABLE"});
+                                     new[] { "dbo", "Location", "BASE_TABLE"},
+                                     new[] { "anotherSchema", "Company", "BASE TABLE" });
 
             schemaProvider.SetColumns(new[] { "dbo", "Employee", "Id" },
                                       new[] { "dbo", "Employee", "Name" },
                                       new[] { "dbo", "Employee", "ManagerId" },
                                       new[] { "dbo", "Employee", "DepartmentId" },
+                                      new[] { "dbo", "Employee", "CompanyId" },
                                       new[] { "dbo", "Department", "Id" },
                                       new[] { "dbo", "Department", "Name" },
                                       new[] { "dbo", "Activity", "ID_Activity"},
@@ -32,8 +34,51 @@ namespace Simple.Data.IntegrationTest.Query
                                       new[] { "dbo", "Activity", "Is_Public" },
                                       new[] { "dbo", "Activity_Join", "ID_Activity" },
                                       new[] { "dbo", "Activity_Join", "ID_Location"},
-                                      new[] { "dbo", "Location", "ID_Location"}
+                                      new[] { "dbo", "Location", "ID_Location"},
+                                      new[] { "anotherSchema", "Company", "Id"},
+                                      new[] { "anotherSchema", "Company", "Name"}
                                       );
+        }
+
+        [Test]
+        public void JoinWithExplicitClauseUsingNamedParametersAndJoiningOnATableInAnotherSchema()
+        {
+            var q = _db.Employees.Query()
+                .Join(_db.anotherSchema.Company, Id: _db.Employees.CompanyId)
+                .Select(_db.Employees.Name, _db.anotherSchema.Company.Name.As("CompanyName"));
+
+            try
+            {
+                q.ToList();
+            }
+            catch (InvalidOperationException)
+            {
+                // This won't work on Mock provider, but the SQL should be generated OK
+            }
+
+            GeneratedSqlIs("select [dbo].[employee].[name],[anotherschema].[company].[name] as [CompanyName] from [dbo].[employee]" +
+                " join [anotherschema].[company] on ([anotherschema].[company].[id] = [dbo].[employee].[companyid])");
+        }
+
+        [Test]
+        public void JoinWithExplicitClauseUsingNamedParametersAndJoiningOnATableInAnotherSchemaWithAWhereClause()
+        {
+            var q = _db.Employees.Query()
+                .Join(_db.anotherSchema.Company, Id: _db.Employees.CompanyId)
+                .Select(_db.Employees.Name, _db.anotherSchema.Company.Name.As("CompanyName"))
+                .Where(_db.anotherSchema.Company.Name.Like("somevalue%"));
+
+            try
+            {
+                q.ToList();
+            }
+            catch (InvalidOperationException)
+            {
+                // This won't work on Mock provider, but the SQL should be generated OK
+            }
+
+            GeneratedSqlIs("select [dbo].[employee].[name],[anotherschema].[company].[name] as [CompanyName] from [dbo].[employee]" +
+                " join [anotherschema].[company] on ([anotherschema].[company].[id] = [dbo].[employee].[companyid])");
         }
 
         [Test]
